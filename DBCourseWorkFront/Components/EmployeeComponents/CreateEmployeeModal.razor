@@ -1,0 +1,66 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="newEmployee" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Add Employee</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="newEmployee.Name" FullWidth="true" />
+            <ValidationMessage For="@(() => newEmployee.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Position" @bind-Value="newEmployee.Position" FullWidth="true" />
+            <ValidationMessage For="@(() => newEmployee.Position)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Salary"
+                                   @bind-Value=@newEmployee.Salary
+                                   FieldType="MatNumericUpDownFieldType.Currency"
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => newEmployee.Salary)" />
+        </p>
+
+        <p>
+            <MatDatePicker Label="Date of Employment" @bind-Value="newEmployee.DateOfEmployment" Format="dd MMMM, yyyy" FullWidth="true"/>
+            <ValidationMessage For="@(() => newEmployee.DateOfEmployment)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Status" @bind-Value="newEmployee.Status" FullWidth="true" />
+            <ValidationMessage For="@(() => newEmployee.Status)" />
+        </p>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Create</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+@code
+{
+    Employee newEmployee = new Employee() { DateOfEmployment = DateTime.Now};
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PostAsJsonAsync<Employee>("https://localhost:5001/Employees", newEmployee);
+        var result = await request.Content.ReadFromJsonAsync<Employee>();
+        DialogReference.Close(result);
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}

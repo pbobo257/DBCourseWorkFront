@@ -1,0 +1,176 @@
+﻿@page "/products"
+@inject HttpClient Http
+@inject IMatDialogService MatDialogService
+
+
+<style>
+    .mdc-paginator-page-size {
+        visibility: hidden
+    }
+</style>
+
+
+<MatBlazor.MatH3 Class="d-inline-block">Products</MatBlazor.MatH3>
+
+
+@if (products == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+
+    <MatTooltip TargetId="fabAdd" Tooltip="Add Product" Position="@MatTooltipPosition.Left">
+        <MatFAB Id="fabAdd" Class="float-md-right" Icon="@MatIconNames.Add" OnClick="@OpenDialog" Style="background-color: #5d2f91"></MatFAB>
+    </MatTooltip>
+
+    <MatTable Items="@sortedProducts" class="mat-elevation-z5" PageSize="10" ShowPaging="true" UseSortHeaderRow="true" AllowSelection="true" OnRowDbClick="RowDblClickEvent">
+        <MatTableHeader>
+            <MatSortHeaderRow SortChanged="@SortData">
+                <MatSortHeader SortId="id">#</MatSortHeader>
+                <MatSortHeader SortId="name"><span style="width:200px">Name</span></MatSortHeader>
+                <MatSortHeader SortId="manufacturer">Manufacturer</MatSortHeader>
+                <MatSortHeader SortId="article">Article</MatSortHeader>
+                <MatSortHeader SortId="weight">Weight (kg)</MatSortHeader>
+                <MatSortHeader SortId="amount">Amount</MatSortHeader>
+                <MatSortHeader SortId="price">Price (₴)</MatSortHeader>
+            </MatSortHeaderRow>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.Id</td>
+            <td>@context.Name</td>
+            <td>@context.Manufacturer</td>
+            <td>@context.Article</td>
+            <td>@context.Weight</td>
+            <td>@context.Amount</td>
+            <td>@context.Price.ToString("F")</td>
+        </MatTableRow>
+    </MatTable>
+}
+@code
+{
+
+    Product newProduct = new Product();
+    MatSortChangedEvent lastSort = null;
+
+
+    async Task OpenDialog()
+    {
+
+        var result = await MatDialogService.OpenAsync(typeof(CreateProductModal), new MatDialogOptions()
+        {
+            SurfaceStyle = "min-width: 600px; max-width: 700px;"
+        });
+        if(result == null)
+        {
+            return;
+        }
+        newProduct = (Product)result;
+
+        products.Add(newProduct);
+        SortData(lastSort);
+
+
+        newProduct = new Product();
+        this.StateHasChanged();
+    }
+
+    List<Product> products;
+    Product[] sortedProducts = null;
+    Product selectedProduct = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        products = await Http.GetFromJsonAsync<List<Product>>("https://localhost:5001/Products");
+
+        base.OnInitialized();
+        SortData(null);
+    }
+
+    public async Task RowDblClickEvent(object row)
+    {
+        if (row == null)
+        {
+            selectedProduct = null;
+            return;
+        }
+
+        selectedProduct = (Product)row;
+        var result = await MatDialogService.OpenAsync(typeof(UpdateProductModal), new MatDialogOptions()
+        {
+            Attributes = new Dictionary<string, object>()
+            {
+                {"UpdateProduct", selectedProduct},
+            },
+            SurfaceStyle = "min-width: 600px; max-width: 700px;"
+        });
+        if (result == null)
+        {
+            return;
+        }
+        selectedProduct = (Product)result;
+
+        if(selectedProduct.Id == -1)
+        {
+            products.Remove(selectedProduct);
+        }
+
+        else
+        {
+            row = selectedProduct;
+        }
+        SortData(lastSort);
+
+
+
+        this.StateHasChanged();
+
+    }
+
+    void SortData(MatSortChangedEvent sort)
+    {
+        lastSort = sort;
+        sortedProducts = products.ToArray();
+        if (!(sort == null || sort.Direction == MatSortDirection.None || string.IsNullOrEmpty(sort.SortId)))
+        {
+            Comparison<Product> comparison = null;
+            switch (sort.SortId)
+            {
+                case "id":
+                    comparison = (s1, s2) => s1.Id.CompareTo(s2.Id);
+                    break;
+                case "name":
+                    comparison = (s1, s2) => string.Compare(s1.Name, s2.Name, StringComparison.InvariantCultureIgnoreCase);
+                    break;
+                case "manufacturer":
+                    comparison = (s1, s2) => string.Compare(s1.Manufacturer, s2.Manufacturer, StringComparison.InvariantCultureIgnoreCase);
+                    break;
+                case "article":
+                    comparison = (s1, s2) => string.Compare(s1.Article, s2.Article, StringComparison.InvariantCultureIgnoreCase);
+                    break;
+                case "weight":
+                    comparison = (s1, s2) => s1.Weight.CompareTo(s2.Weight);
+                    break;
+                case "amount":
+                    comparison = (s1, s2) => s1.Amount.CompareTo(s2.Amount);
+                    break;
+                case "price":
+                    comparison = (s1, s2) => s1.Price.CompareTo(s2.Price);
+                    break;
+            }
+            if (comparison != null)
+            {
+                if (sort.Direction == MatSortDirection.Desc)
+                {
+                    Array.Sort(sortedProducts, (s1, s2) => -1 * comparison(s1, s2));
+                }
+                else
+                {
+                    Array.Sort(sortedProducts, comparison);
+                }
+            }
+        }
+    }
+
+
+}

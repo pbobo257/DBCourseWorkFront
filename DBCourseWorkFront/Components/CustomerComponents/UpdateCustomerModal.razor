@@ -1,0 +1,69 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="UpdateCustomer" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Update Customer</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="UpdateCustomer.Name" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateCustomer.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Phone Number" @bind-Value="UpdateCustomer.PhoneNumber" FullWidth="true" Type="tel"/>
+            <ValidationMessage For="@(() => UpdateCustomer.PhoneNumber)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Bonuses"
+                                   @bind-Value=UpdateCustomer.Bonuses
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=0>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => UpdateCustomer.Bonuses)" />
+        </p>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Save</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+
+@code
+{
+    [Parameter]
+    public Customer UpdateCustomer { get; set; }
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+    async Task OpenConfirmFromService()
+    {
+        var isDeleteConfirmed = await MatDialogService.ConfirmAsync($"Are you sure you want to delete {UpdateCustomer.Name}?");
+        if (isDeleteConfirmed)
+        {
+            var response = await Http.DeleteAsync($"https://localhost:5001/Customers?id={UpdateCustomer.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                UpdateCustomer.Id = -1;
+                DialogReference.Close(UpdateCustomer);
+            }
+        }
+    }
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PutAsJsonAsync<Customer>("https://localhost:5001/Customers", UpdateCustomer);
+        DialogReference.Close(UpdateCustomer);
+
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "Id": 1,
+    "Name": "Bread",
+    "Manufacturer": "Asdf",
+    "Article": "123",
+    "Weight": 123,
+    "Price": 123.00,
+    "Amount": 5
+  },
+  {
+    "Id": 2,
+    "Name": "Milk",
+    "Manufacturer": "Asdf",
+    "Article": "123",
+    "Weight": 123,
+    "Price": 123.00,
+    "Amount": 5
+  },
+  {
+    "Id": 3,
+    "Name": "Cocoa",
+    "Manufacturer": "Asdf",
+    "Article": "123",
+    "Weight": 1,
+    "Price": 55.00,
+    "Amount": 0
+  },
+  {
+    "Id": 4,
+    "Name": "Cocoa",
+    "Manufacturer": "Asdf",
+    "Article": "123",
+    "Weight": 1,
+    "Price": 55.00,
+    "Amount": 0
+  }
+]

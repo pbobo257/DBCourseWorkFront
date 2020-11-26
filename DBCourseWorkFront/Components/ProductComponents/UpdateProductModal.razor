@@ -1,0 +1,96 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="UpdateProduct" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Update Product</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="UpdateProduct.Name" FullWidth="true"/>
+            <ValidationMessage For="@(() => UpdateProduct.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Manufacturer" @bind-Value="UpdateProduct.Manufacturer" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateProduct.Manufacturer)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Article" @bind-Value="UpdateProduct.Article" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateProduct.Article)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Weight"
+                                   @bind-Value=@UpdateProduct.Weight
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   Step="0.01"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => UpdateProduct.Weight)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Price"
+                                   @bind-Value=@UpdateProduct.Price
+                                   FieldType="MatNumericUpDownFieldType.Currency"
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => UpdateProduct.Price)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Amount"
+                                   @bind-Value=@UpdateProduct.Amount
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=0>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => UpdateProduct.Amount)" />
+        </p>
+        <span>If you want to delete item <a @onclick="(_=>OpenConfirmFromService())" style="color: #5d2f91; cursor: pointer; font-weight: bold">click here</a></span>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Save</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+@code
+{
+    [Parameter]
+    public Product UpdateProduct { get; set; }
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+    async Task OpenConfirmFromService()
+    {
+        var isDeleteConfirmed = await MatDialogService.ConfirmAsync($"Are you sure you want to delete {UpdateProduct.Name}?");
+        if (isDeleteConfirmed)
+        {
+            var response = await Http.DeleteAsync($"https://localhost:5001/Products?id={UpdateProduct.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                UpdateProduct.Id = -1;
+                DialogReference.Close(UpdateProduct);
+            }
+        }
+    }
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PutAsJsonAsync<Product>("https://localhost:5001/Products", UpdateProduct);
+        DialogReference.Close(UpdateProduct);
+
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}

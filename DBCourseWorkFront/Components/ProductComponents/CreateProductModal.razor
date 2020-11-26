@@ -1,0 +1,83 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="newProduct" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Add Product</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="newProduct.Name" FullWidth="true" />
+            <ValidationMessage For="@(() => newProduct.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Manufacturer" @bind-Value="newProduct.Manufacturer" FullWidth="true" />
+            <ValidationMessage For="@(() => newProduct.Manufacturer)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Article" @bind-Value="newProduct.Article" FullWidth="true" />
+            <ValidationMessage For="@(() => newProduct.Article)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Weight"
+                                   @bind-Value=@newProduct.Weight
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   Step="0.01"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => newProduct.Weight)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Price"
+                                   @bind-Value=@newProduct.Price
+                                   FieldType="MatNumericUpDownFieldType.Currency"
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => newProduct.Price)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Amount"
+                                   @bind-Value=@newProduct.Amount
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=0>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => newProduct.Amount)" />
+        </p>
+
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Create</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+@code
+{
+    Product newProduct = new Product();
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PostAsJsonAsync<Product>("https://localhost:5001/Products", newProduct);
+        var result = await request.Content.ReadFromJsonAsync<Product>();
+        DialogReference.Close(result);
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}

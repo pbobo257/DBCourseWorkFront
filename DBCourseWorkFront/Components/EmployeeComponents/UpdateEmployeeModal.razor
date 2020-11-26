@@ -1,0 +1,81 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="UpdateEmployee" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Update Employee</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="UpdateEmployee.Name" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateEmployee.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Position" @bind-Value="UpdateEmployee.Position" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateEmployee.Position)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Salary"
+                                   @bind-Value=@UpdateEmployee.Salary
+                                   FieldType="MatNumericUpDownFieldType.Currency"
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=2>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => UpdateEmployee.Salary)" />
+        </p>
+
+        <p>
+            <MatDatePicker Label="Date of Employment" @bind-Value="UpdateEmployee.DateOfEmployment" Format="dd MMMM, yyyy" FullWidth="true"/>
+            <ValidationMessage For="@(() => UpdateEmployee.DateOfEmployment)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Status" @bind-Value="UpdateEmployee.Status" FullWidth="true" />
+            <ValidationMessage For="@(() => UpdateEmployee.Status)" />
+        </p>
+        <span>If you want to delete item <a @onclick="(_=>OpenConfirmFromService())" style="color: #5d2f91; cursor: pointer; font-weight: bold">click here</a></span>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Save</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+
+@code
+{
+    [Parameter]
+    public Employee UpdateEmployee { get; set; }
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+    async Task OpenConfirmFromService()
+    {
+        var isDeleteConfirmed = await MatDialogService.ConfirmAsync($"Are you sure you want to delete {UpdateEmployee.Name}?");
+        if (isDeleteConfirmed)
+        {
+            var response = await Http.DeleteAsync($"https://localhost:5001/Employees?id={UpdateEmployee.Id}");
+            if (response.IsSuccessStatusCode)
+            {
+                UpdateEmployee.Id = -1;
+                DialogReference.Close(UpdateEmployee);
+            }
+        }
+    }
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PutAsJsonAsync<Employee>("https://localhost:5001/Employees", UpdateEmployee);
+        DialogReference.Close(UpdateEmployee);
+
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}

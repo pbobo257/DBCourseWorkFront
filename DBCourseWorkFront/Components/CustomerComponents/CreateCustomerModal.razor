@@ -1,0 +1,55 @@
+﻿@inject IMatDialogService MatDialogService
+@inject HttpClient Http
+
+<EditForm Model="newCustomer" OnValidSubmit="@(_ => CloseDialogSuccess())">
+    <DataAnnotationsValidator />
+    <MatDialogTitle>Add Customer</MatDialogTitle>
+    <MatDialogContent>
+        <br />
+        <p>
+            <MatTextField Label="Name" @bind-Value="newCustomer.Name" FullWidth="true" />
+            <ValidationMessage For="@(() => newCustomer.Name)" />
+        </p>
+
+        <p>
+            <MatTextField Label="Phone Number" @bind-Value="newCustomer.PhoneNumber" FullWidth="true" Type="tel" pattern="^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$"/>
+            <ValidationMessage For="@(() => newCustomer.PhoneNumber)" />
+        </p>
+
+        <p>
+            <MatNumericUpDownField Label="Bonuses"
+                                   @bind-Value=newCustomer.Bonuses
+                                   Minimum="0"
+                                   FullWidth="true"
+                                   DecimalPlaces=0>
+            </MatNumericUpDownField>
+            <ValidationMessage For="@(() => newCustomer.Bonuses)" />
+        </p>
+    </MatDialogContent>
+    <MatDialogActions>
+        <MatButton Type="button" OnClick="@(_ => CloseDialog())">Cancel</MatButton>
+        <MatButton Type="submit">Create</MatButton>
+    </MatDialogActions>
+</EditForm>
+
+@code
+{
+    Customer newCustomer = new Customer();
+
+    [CascadingParameter]
+    public MatDialogReference DialogReference { get; set; }
+
+
+
+    async Task CloseDialogSuccess()
+    {
+        var request = await Http.PostAsJsonAsync<Customer>("https://localhost:5001/Customers", newCustomer);
+        var result = await request.Content.ReadFromJsonAsync<Customer>();
+        DialogReference.Close(result);
+    }
+
+    async Task CloseDialog()
+    {
+        DialogReference.Close(null);
+    }
+}
